@@ -1,0 +1,6 @@
+FROM ruby:2.3.1
+ADD ./ /webapps
+WORKDIR webapps
+RUN ["bundle", "install"]
+ENTRYPOINT ["bundle", "exec"]
+CMD ["rake", "workers:start"]

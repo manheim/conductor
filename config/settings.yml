@@ -1,0 +1,61 @@
+app_env: <%= ENV['APP_ENV'] %>
+basic_auth_enabled: <%= ENV['BASIC_AUTH_ENABLED'] || "true" %>
+basic_auth_user: <%= ENV['BASIC_AUTH_USER'] || "admin" %>
+basic_auth_password: <%= ENV['BASIC_AUTH_PASSWORD'] || "password" %>
+destination_auth_username: <%= ENV['DESTINATION_AUTH_USERNAME'] || "username" %>
+destination_auth_password: <%= ENV['DESTINATION_AUTH_PASSWORD'] || "password" %>
+use_destination_basic_auth: <%= ENV['USE_DESTINATION_BASIC_AUTH'] ? ENV['USE_DESTINATION_BASIC_AUTH'] : false %>
+retention_period: <%= ENV['RETENTION_PERIOD_SECONDS'] || 2.5.days.seconds.to_i %>
+cleanup_cron_job_schedule: "<%= ENV['CLEANUP_CRON_JOB_SCHEDULE'] || '0 * * * *' %>"
+monitoring_cron_job_schedule: "<%= ENV['MONITORING_CRON_JOB_SCHEDULE'] || '*/5 * * * *' %>"
+deletion_batch_size: <%= ENV['DELETION_BATCH_SIZE'] || 5000 %>
+shard_tag: <%= ENV['CONDUCTOR_SHARD_TAG'] || 'Conductor-Shard-Tag' %>
+enable_tag: <%= ENV['CONDUCTOR_ENABLE_TAG'] || 'Conductor-Enabled-Tag' %>
+disable_message_sending: <%= ENV['CONDUCTOR_DISABLE_MESSAGE_SENDING'] || 'false' %>
+threaded_worker_thread_count: <%= ENV['THREADED_WORKER_THREAD_COUNT'] ? ENV['THREADED_WORKER_THREAD_COUNT'].to_i : 10  %>
+threaded_worker_sleep_delay: <%= ENV['THREADED_WORKER_SLEEP_DELAY'] ? ENV['THREADED_WORKER_SLEEP_DELAY'].to_i : 1  %>
+threaded_worker_failure_delay: <%= ENV['THREADED_WORKER_FAILURE_DELAY'] ? ENV['THREADED_WORKER_FAILURE_DELAY'].to_i : 35  %>
+threaded_worker_no_work_delay: <%= ENV['THREADED_WORKER_NO_WORK_DELAY'] ? ENV['THREADED_WORKER_NO_WORK_DELAY'].to_i : 1  %>
+endpoint_hostname: <%= ENV['ENDPOINT_HOSTNAME'] || 'http://localhost:3001' %>
+endpoint_path: <%= ENV['ENDPOINT_PATH'] || "/scaffolding/messages" %>
+endpoint_query: <%= ENV['ENDPOINT_QUERY'] %>
+workers_enabled: <%= ENV['WORKERS_ENABLED'] ? ENV['WORKERS_ENABLED'] : true %>
+search_text_number_characters: <%= ENV['SEARCH_TEXT_NUMBER_CHARACTERS'] || 140 %>
+search_text_words: <%= ENV['SEARCH_TEXT_WORDS'] || 'href,resource,eventType' %>
+search_text_extraction_direction: <%= ENV['SEARCH_TEXT_EXTRACTION_DIRECTION'] || 'forwards' %>
+# This is the list of mysql stop words that can't be searched on in mysql
+search_text_ignore_words: <%= ENV['SEARCH_TEXT_IGNORE_WORDS'] || "about,an,are,as,at,be,by,com,de,en,for,from,how,i,in,is,it,la,of,on,or,that,the,this,to,was,what,when,where,who,will,with,und,the,www" %>
+
+iterative_producer_batch_size: <%= ENV['ITERATIVE_PRODUCER_BATCH_SIZE'] ? ENV['ITERATIVE_PRODUCER_BATCH_SIZE'].to_i : 1000  %>
+
+autogenerate_shard_id: <%= ENV['AUTOGENERATE_SHARD_ID'] ? ENV['AUTOGENERATE_SHARD_ID'] : nil %>
+autogenerate_shard_id_range: <%= ENV['AUTOGENERATE_SHARD_ID_RANGE'] ? ENV['AUTOGENERATE_SHARD_ID_RANGE'].to_i : nil %>
+unhealthy_shard_threshold: <%= ENV['UNHEALTHY_SHARD_THRESHOLD'] ? ENV['UNHEALTHY_SHARD_THRESHOLD'].to_i : 2 %>
+unhealthy_message_age_in_seconds: <%= ENV['UNHEALTHY_MESSAGE_AGE_IN_SECONDS'] ? ENV['UNHEALTHY_MESSAGE_AGE_IN_SECONDS'].to_i : 30.minutes %>
+blocked_shard_message_failure_threshold: <%= ENV['BLOCKED_SHARD_MESSAGE_FAILURE_THRESHOLD'] ? ENV['BLOCKED_SHARD_MESSAGE_FAILURE_THRESHOLD'].to_i : 20 %>
+unsent_message_count_threshold: <%= ENV['UNSENT_MESSAGE_COUNT_THRESHOLD'] ? ENV['UNSENT_MESSAGE_COUNT_THRESHOLD'].to_i : 10000 %>
+undeliverable_percent_health_threshold: <%= ENV['UNDELIVERABLE_PERCENT_HEALTH_THRESHOLD'] %>
+pagerduty_service_key: <%= ENV['PAGERDUTY_SERVICE_KEY'] %>
+pagerduty_application_name: <%= ENV['PAGERDUTY_APPLICATION_NAME'] %>
+datadog_api_key: <%= ENV['DATADOG_API_KEY'] %>
+new_relic_app_name: <%= ENV['NEW_RELIC_APP_NAME'] || 'Conductor' %>
+conductor_health_page_url: <%= ENV['CONDUCTOR_HEALTH_PAGE_URL'] || 'http://localhost:7000/admin/health' %>
+most_expected_minutes_between_messages: <%= ENV['MOST_EXPECTED_MINUTES_BETWEEN_MESSAGES'] ? ENV['MOST_EXPECTED_MINUTES_BETWEEN_MESSAGES'].to_i.minutes : 10.minutes %>
+max_full_text_search_results: <%= ENV['MAX_FULL_TEXT_SEARCH_RESULTS'] ? ENV['MAX_FULL_TEXT_SEARCH_RESULTS'].to_i : 1000 %>
+
+max_number_of_retries: <%= ENV['MAX_NUMBER_OF_RETRIES'] ? ENV['MAX_NUMBER_OF_RETRIES'] : nil %>
+
+readonly_username: <%= ENV['READONLY_USERNAME'] || "username" %>
+readonly_password: <%= ENV['READONLY_PASSWORD'] || "password" %>
+
+monitoring_worker_pause_amount: <%= ENV['MONITORING_WORKER_PAUSE_AMOUNT'] ? ENV['MONITORING_WORKER_PAUSE_AMOUNT'].to_i : 5 %>
+
+team_name: <%= ENV['TEAM_NAME'] %>
+associated_application_name: <%= ENV['ASSOCIATED_APPLICATION_NAME'] %>
+
+extract_shard_enabled: <%= ENV['EXTRACT_SHARD_ENABLED'] || 'false' %>
+extract_shard_content_type: <%= ENV['EXTRACT_SHARD_CONTENT_TYPE'] %>
+extract_shard_path: <%= ENV['EXTRACT_SHARD_PATH'] %>
+
+inbound_message_filter: <%= ENV['INBOUND_MESSAGE_FILTER'] ? "\"#{ENV['INBOUND_MESSAGE_FILTER']}\"" : nil %>
+runtime_settings_cache_expiration_seconds: 60

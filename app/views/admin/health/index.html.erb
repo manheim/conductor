@@ -1,0 +1,27 @@
+<ul class="health__list">
+  <li>
+    <% if @is_healthy %>
+      <b style="color:green;">healthy</b>
+    <% else %>
+      <b style="color:red;">UNHEALTHY</b>
+    <% end %>
+  </li>
+  <li>
+    <% if !RuntimeSettings::Config.workers_enabled %>
+      <b style="color:red;">WORKERS PAUSED</b>
+    <% end %>
+  </li>
+  <li>Messages processed in the last minute: <%= @processing_rate %></li>
+  <% if !@undeliverable_percent.nil? %>
+  <li>Messages undeliverable in the last <%= @undeliverable_window %> minutes: <%= number_with_precision @undeliverable_percent, precision: 0 %>%</li>
+  <% end %>
+  <li>Number of unsent messages: <%= @unsent_count %></li>
+  <li>Number of blocked shards: <%= @shards_blocked %></li>
+  <li>Number of failing messages: <%= @failed_count %></li>
+  <% if @oldest_msg_age != '' %>
+  <li>Oldest unsent message created <%= @oldest_msg_age %> ago</li>
+  <% end %>
+  <li>
+    <a href="/admin/messages?view=most_failing&limit=10">See most failing messages</a>
+  </li>
+</ul>

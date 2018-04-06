@@ -1,0 +1,28 @@
+common: &common
+  host: <%= ENV['DATABASE_HOST'] || '' %>
+  username: <%= ENV['DATABASE_USERNAME'] || 'root' %>
+  password: <%= ENV['DATABASE_PASSWORD'] || '' %>
+  adapter: mysql2
+  port: 3306
+  encoding: utf8mb4
+  collation: utf8mb4_unicode_ci
+  reconnect: false
+  pool: <%= ENV['DATABASE_POOL_SIZE'] ? ENV['DATABASE_POOL_SIZE'].to_i : 25 %>
+  connect_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  read_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  write_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  wait_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  # checkout_timeout if for active_record: https://github.com/rails/rails/issues/6441
+  checkout_timeout: 5
+  database: <%= ENV['DATABASE_NAME'] || 'conductor' %>
+
+development:
+  <<: *common
+
+production:
+  <<: *common
+  pool: <%= ENV['DATABASE_POOL_SIZE'] ? ENV['DATABASE_POOL_SIZE'].to_i : 50 %>
+
+test: &test
+  <<: *common
+  database: <%= ENV["TEST_DATABASE"] || "conductor_test#{ENV['DATABASE_NUMBER']}" %>
