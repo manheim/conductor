@@ -46,6 +46,7 @@ bundle exec rake monitoring:start
 ```
 
 **Run on Elastic Beanstalk**  
+
 Example `Dockerrun.json` file for running application in containers on Elastic Beanstalk
 ```
 {
@@ -61,25 +62,25 @@ Example `Dockerrun.json` file for running application in containers on Elastic B
                   "containerPort": 8080
                 }
             ],
-            "memory": 512
+            "memoryReservation": 512
         },
         {
             "name": "conductor_cleaner",
             "image": "image:BUILD_NUMBER",
             "essential": true,
-            "memory": 128
+            "memoryReservation": 128
         },
         {
             "name": "conductor_worker",
             "image": "image:BUILD_NUMBER",
             "essential": true,
-            "memory": 512
+            "memoryReservation": 512
         },
         {
             "name": "conductor_monitoring",
             "image": "image:BUILD_NUMBER",
             "essential": true,
-            "memory": 128
+            "memoryReservation": 128
         }
     ],
     "volumes": [
@@ -92,6 +93,18 @@ Example `Dockerrun.json` file for running application in containers on Elastic B
     ]
 }
 ```
+
+**Deployment Tips**
+
+On newer platforms the glibc library has changed to allocate more memory in multi-threaded applications such as the conductor (in order to make memory allocation faster).
+
+If you'd like to reduce the memory footprint so that you can run on a smaller instance with less memory, you may want to set MALLOC_ARENA_MAX as an environment variable
+
+See these references for more information:
+
+<https://devcenter.heroku.com/articles/tuning-glibc-memory-behavior#when-to-tune-malloc_arena_max>
+
+<https://www.gnu.org/software/libc/manual/html_node/Memory-Allocation-Tunables.html>
 
 **Admin Tool**
  - Available under the path /admin
