@@ -38,11 +38,11 @@ module Producer
     def self.shards_past_failure_delay(failure_delay)
       Message.connection.execute(
         "select shard_id from messages
-         where id in (
+         where needs_sending = true and
+         id in (
            select min(id) from messages
            where needs_sending = true
            group by shard_id
-           order by id asc
          )
          and (TIMESTAMPDIFF(SECOND, last_failed_at, now()) > #{failure_delay} or last_failed_at is null)
          order by last_failed_at
