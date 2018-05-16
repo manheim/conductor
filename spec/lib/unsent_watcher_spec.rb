@@ -82,7 +82,7 @@ RSpec.describe UnsentWatcher do
 
     context "multiple failing messages received which have failed at least 1 time" do
       before do
-        create_list(:failed_message, 11)
+        create_list(:failed_message, 10)
       end
 
       it "returns enumerable containing 10 failing messages" do
@@ -101,7 +101,7 @@ RSpec.describe UnsentWatcher do
 
       it "limits the failing results" do
         correct_messages = Message.where(needs_sending: true).order(processed_count: :desc, id: :desc).first(2)
-        expect(subject.most_failing_unsent_messages(2)).to eq correct_messages
+        expect(subject.most_failing_unsent_messages(10)[0..1]).to eq correct_messages
       end
     end
   end

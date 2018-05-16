@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe Producer::IterativeDatabaseProducer do
   let(:logger) { Rails.logger }
-  let(:delay) { :not_used }
 
   context "::produce_work" do
     context "no messages need sending" do
       it "pushes nothing and exits" do
         input_queue = []
-        described_class.produce_work input_queue, delay
+        producer = described_class.new input_queue
+        producer.produce_work
         expect(input_queue.size).to eq 0
       end
     end
@@ -28,7 +28,8 @@ RSpec.describe Producer::IterativeDatabaseProducer do
 
       it "only pushes shard ids that have a message that needs sending" do
         input_queue = SizedQueue.new 10
-        described_class.produce_work input_queue, delay
+        producer = described_class.new input_queue
+        producer.produce_work
         expect(input_queue.size).to eq 2
         expected = [input_queue.pop, input_queue.pop]
         expect(expected).to match_array(['1','2'])
@@ -36,8 +37,9 @@ RSpec.describe Producer::IterativeDatabaseProducer do
 
       it "doesn't iterate through all batches as it comes in" do
         input_queue = SizedQueue.new 1
+        producer = described_class.new input_queue
         t = Thread.new do
-          described_class.produce_work input_queue, delay
+          producer.produce_work
         end
         shard1 = input_queue.pop
         create(:message, body: "test", shard_id: 5, needs_sending: true)

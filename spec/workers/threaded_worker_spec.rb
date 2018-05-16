@@ -4,7 +4,8 @@ require 'webmock/rspec'
 
 RSpec.describe ThreadedWorker, type: :model do
   let(:failure_delay) { 3 }
-  subject { described_class.new({failure_delay: failure_delay}) }
+  let(:failure_exponent_base) { 1 }
+  subject { described_class.new({failure_delay: failure_delay, failure_exponent_base: failure_exponent_base }) }
 
   let(:needs_sending_decision) { true }
 
@@ -37,13 +38,13 @@ RSpec.describe ThreadedWorker, type: :model do
     let(:producer_name) { 'Producer::UnprocessedShardsProducer' }
     subject { described_class.new({producer_name: producer_name}) }
     it "loads the given producer" do
-      expect(subject.producer).to eq Producer::UnprocessedShardsProducer
+      expect(subject.producer.class).to eq Producer::UnprocessedShardsProducer
     end
   end
 
   context "default producer" do
     it "uses iterative database producer by default" do
-      expect(subject.producer).to eq Producer::IterativeDatabaseProducer
+      expect(subject.producer.class).to eq Producer::IterativeDatabaseProducer
     end
   end
 
@@ -320,7 +321,7 @@ RSpec.describe ThreadedWorker, type: :model do
       let!(:messages) do
         create(:message, body: 1, shard_id: 1, needs_sending: true)
       end
-      subject { described_class.new({thread_count: 1, failure_delay: failure_delay}) }
+      subject { described_class.new({thread_count: 1, failure_delay: failure_delay, failure_exponent_base: failure_exponent_base}) }
 
       it "it skips work when failures occur until failure_delay has passed" do
         stub_request(:post, /scaffolding\/messages/).
@@ -389,6 +390,46 @@ RSpec.describe ThreadedWorker, type: :model do
         expect(message1.response_code).to eq 200
         expect(message1.response_body).to eq "si bueno"
         expect(message1.succeeded_at - message1.last_failed_at).to be >= failure_delay
+      end
+
+      context "exponential backoff is configured" do
+        let(:failure_exponent_base) { 2 }
+
+        it "it skips work when errors occur until failure_delay has passed" do
+          stub_request(:post, /scaffolding\/messages/).
+              with(body: 1.to_s).
+              to_raise(StandardError).
+              to_raise(StandardError).
+              to_return({:body => "si bueno", status: 200})
+
+          subject.process_without_looping
+          subject.wait_for_processing
+
+          message1 = Message.where(shard_id: 1).first
+          expect(message1.last_failed_at).to_not be nil
+
+          sleep failure_delay + 1
+
+          subject.produce_work
+          subject.wait_for_processing
+
+          # this shouldn't be enough time to sleep so the message won't get processed
+          sleep failure_delay + 1
+
+          subject.produce_work
+          subject.wait_for_processing
+
+          sleep failure_delay + 1
+
+          subject.produce_work
+          subject.wait_for_processing
+
+          message1 = Message.where(shard_id: 1).first
+          expect(message1.succeeded_at).to_not be nil
+          expect(message1.response_code).to eq 200
+          expect(message1.response_body).to eq "si bueno"
+          expect(message1.succeeded_at - message1.last_failed_at).to be >= failure_delay * 2
+        end
       end
 
       context 'when processed_count exceeds the max retries' do

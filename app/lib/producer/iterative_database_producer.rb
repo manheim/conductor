@@ -8,7 +8,11 @@ module Producer
   class IterativeDatabaseProducer
     include Logging
 
-    def self.produce_work input_queue, _delay_between_processing, _failure_delay = Settings.threaded_worker_failure_delay
+    def initialize(input_queue, settings = {})
+      @input_queue = input_queue
+    end
+
+    def produce_work
       newest_message = Message.where(needs_sending: true).select(:id).last
 
       query = if newest_message
@@ -23,7 +27,7 @@ module Producer
         debug("Found #{shards.size} to produce")
         shards.each do |s|
           debug("Enqueuing shard #{s}")
-          input_queue << s
+          @input_queue << s
         end
       end
     end

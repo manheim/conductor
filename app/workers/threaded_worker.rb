@@ -8,7 +8,7 @@ class ThreadedWorker
     :thread_count,
     :sleep_delay,
     :failure_delay,
-    :no_work_delay
+    :failure_exponent_base,
   ]
 
   attr_accessor(*ALLOWED_OPTIONS)
@@ -45,18 +45,22 @@ class ThreadedWorker
     self.thread_count = options[:thread_count] || Settings.threaded_worker_thread_count
     self.sleep_delay = options[:sleep_delay] || Settings.threaded_worker_sleep_delay
     self.failure_delay = options[:failure_delay] || Settings.threaded_worker_failure_delay
-    self.no_work_delay = options[:no_work_delay] || Settings.threaded_worker_no_work_delay
+    self.failure_exponent_base = options[:failure_exponent_base] || Settings.threaded_worker_failure_exponent_base
     self.input_queue = SizedQueue.new(thread_count)
     self.connection = options[:connection] || default_connection
-    self.producer = load_producer options[:producer_name]
+    self.producer = load_producer(options[:producer_name], input_queue)
     self.consumers = []
   end
 
-  def load_producer producer_name
-    producer = Producer::IterativeDatabaseProducer unless producer_name
-    producer ||= producer_name.constantize
-    info "Loaded producer #{producer}"
-    producer
+  def load_producer producer_name, input_queue
+    producer_class = Producer::IterativeDatabaseProducer unless producer_name
+    producer_class ||= producer_name.constantize
+    info "Loaded producer #{producer_class}"
+    producer_class.new(input_queue, {
+      threaded_worker_failure_delay: Settings.threaded_worker_failure_delay,
+      threaded_worker_failure_exponent_base: Settings.threaded_worker_failure_exponent_base,
+      threaded_worker_no_work_delay: Settings.threaded_worker_no_work_delay
+    })
   end
 
   def start
@@ -98,10 +102,6 @@ class ThreadedWorker
     end
   end
 
-  def produce_work
-    producer.produce_work input_queue, no_work_delay, failure_delay
-  end
-
   def process_work
     with_thread_error_handling("produce_work", true) do
       while(Message.where(needs_sending: true).count > 0)
@@ -112,6 +112,10 @@ class ThreadedWorker
         end
       end
     end
+  end
+
+  def produce_work
+    producer.produce_work
   end
 
   def process_without_looping
@@ -153,8 +157,9 @@ class ThreadedWorker
       return
     end
 
-    if message.last_failed_at && Time.now < (message.last_failed_at + failure_delay.seconds)
-      info "Skipping processing of message #{message.id} since last failure of #{message.last_failed_at} is within #{failure_delay} seconds of #{Time.now}"
+    next_retry = RetryCalculator.new(failure_delay: failure_delay, failure_exponent_base: failure_exponent_base).next_retry(message)
+    if message.last_failed_at && Time.now < next_retry
+      info "Skipping processing of message #{message.id} since next retry time is #{next_retry}"
       return
     end
 
