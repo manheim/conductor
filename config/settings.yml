@@ -15,6 +15,7 @@ disable_message_sending: <%= ENV['CONDUCTOR_DISABLE_MESSAGE_SENDING'] || 'false'
 threaded_worker_thread_count: <%= ENV['THREADED_WORKER_THREAD_COUNT'] ? ENV['THREADED_WORKER_THREAD_COUNT'].to_i : 10  %>
 threaded_worker_sleep_delay: <%= ENV['THREADED_WORKER_SLEEP_DELAY'] ? ENV['THREADED_WORKER_SLEEP_DELAY'].to_i : 1  %>
 threaded_worker_failure_delay: <%= ENV['THREADED_WORKER_FAILURE_DELAY'] ? ENV['THREADED_WORKER_FAILURE_DELAY'].to_i : 35  %>
+threaded_worker_max_failure_delay: <%= ENV['THREADED_WORKER_MAX_FAILURE_DELAY'] ? ENV['THREADED_WORKER_MAX_FAILURE_DELAY'].to_i : nil  %>
 threaded_worker_failure_exponent_base: <%= ENV['THREADED_WORKER_FAILURE_EXPONENT_BASE'] ? ENV['THREADED_WORKER_FAILURE_EXPONENT_BASE'].to_i : 1  %>
 threaded_worker_no_work_delay: <%= ENV['THREADED_WORKER_NO_WORK_DELAY'] ? ENV['THREADED_WORKER_NO_WORK_DELAY'].to_i : 1  %>
 endpoint_hostname: <%= ENV['ENDPOINT_HOSTNAME'] || 'http://localhost:3001' %>

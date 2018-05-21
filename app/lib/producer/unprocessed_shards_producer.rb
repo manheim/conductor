@@ -10,10 +10,13 @@ module Producer
   class UnprocessedShardsProducer
     include Logging
 
+    MAX_INT_VALUE = 2147483648
+
     def initialize(input_queue, settings)
       @input_queue = input_queue
       @delay_between_processing = settings[:threaded_worker_no_work_delay]
       @failure_delay = settings[:threaded_worker_failure_delay]
+      @max_failure_delay = settings[:threaded_worker_max_failure_delay] || MAX_INT_VALUE
       @failure_exponent_base = settings[:threaded_worker_failure_exponent_base]
     end
 
@@ -51,7 +54,7 @@ module Producer
            where needs_sending = true
            group by shard_id
          )
-         and (TIMESTAMPDIFF(SECOND, last_failed_at, now()) > (#{@failure_delay} * POW(#{@failure_exponent_base}, processed_count - 1)) or last_failed_at is null)
+         and (TIMESTAMPDIFF(SECOND, last_failed_at, now()) > LEAST(#{@max_failure_delay}, (#{@failure_delay} * POW(#{@failure_exponent_base}, processed_count - 1))) or last_failed_at is null)
          order by last_failed_at
         "
       ).to_a.flatten

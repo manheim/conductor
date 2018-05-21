@@ -116,111 +116,173 @@ RSpec.describe Producer::UnprocessedShardsProducer do
     end
   end
 
-    context "ignoring failed message shards no exponential backoff" do
-      let!(:messages) do
-        [
-          create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+  context "ignoring failed message shards no exponential backoff" do
+    let!(:messages) do
+      [
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 2, needs_sending: false, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 10.seconds.ago),
-          create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 10.seconds.ago),
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: 45.seconds.ago),
-          create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: 45.seconds.ago),
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 5, needs_sending: false, last_failed_at: 40.seconds.ago),
+        create(:message, body: "test", shard_id: 5, needs_sending: false, last_failed_at: 40.seconds.ago),
 
-          create(:message, body: "test", shard_id: 6, needs_sending: true, last_failed_at: 40.seconds.ago),
+        create(:message, body: "test", shard_id: 6, needs_sending: true, last_failed_at: 40.seconds.ago),
 
-          create(:message, body: "test", shard_id: 7, needs_sending: false, last_failed_at: 10.seconds.ago),
-          create(:message, body: "test", shard_id: 7, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 7, needs_sending: false, last_failed_at: 10.seconds.ago),
+        create(:message, body: "test", shard_id: 7, needs_sending: true, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 8, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 8, needs_sending: true, last_failed_at: nil),
 
-          create(:message, body: "test", shard_id: 9, needs_sending: true, last_failed_at: 50.seconds.ago),
-        ]
-      end
-
-      let(:expected_shards_with_no_failure) { ["2", "8", "7"] }
-      let(:expected_shards_with_failure) { ["9", "4", "6"] }
-      let(:expected_shards) { expected_shards_with_no_failure + expected_shards_with_failure }
-
-      let(:failure_delay_seconds) { 30 }
-
-      it "finds all shards that did not fail or failed later than the wait period in order of last_failed_at (null is first)" do
-        input_queue = []
-        settings[:threaded_worker_failure_delay] = failure_delay_seconds
-        producer = described_class.new input_queue, settings
-        producer.produce_work
-        expect(input_queue).to match_array(expected_shards)
-
-        expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
-        expect(input_queue[3..5]).to eq(expected_shards_with_failure)
-      end
+        create(:message, body: "test", shard_id: 9, needs_sending: true, last_failed_at: 50.seconds.ago),
+      ]
     end
 
-    context "ignoring failed message shards with exponential backoff" do
-      let!(:messages) do
-        [
-          create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+    let(:expected_shards_with_no_failure) { ["2", "8", "7"] }
+    let(:expected_shards_with_failure) { ["9", "4", "6"] }
+    let(:expected_shards) { expected_shards_with_no_failure + expected_shards_with_failure }
 
-          create(:message, body: "test", shard_id: 2, needs_sending: false, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
-          create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+    let(:failure_delay_seconds) { 30 }
 
-          create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 10.seconds.ago, processed_count: 1),
-          create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: nil),
+    it "finds all shards that did not fail or failed later than the wait period in order of last_failed_at (null is first)" do
+      input_queue = []
+      settings[:threaded_worker_failure_delay] = failure_delay_seconds
+      producer = described_class.new input_queue, settings
+      producer.produce_work
+      expect(input_queue).to match_array(expected_shards)
 
-          create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: 25.seconds.ago, processed_count: 2),
-          create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 5, needs_sending: false, last_failed_at: 40.seconds.ago),
-
-          create(:message, body: "test", shard_id: 6, needs_sending: true, last_failed_at: 45.seconds.ago, processed_count: 3),
-
-          create(:message, body: "test", shard_id: 7, needs_sending: false, last_failed_at: 10.seconds.ago),
-          create(:message, body: "test", shard_id: 7, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 8, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 9, needs_sending: true, last_failed_at: 85.seconds.ago, processed_count: 4),
-
-          create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: 20.seconds.ago, processed_count: 2),
-          create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: 40.seconds.ago, processed_count: 3),
-          create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: 80.seconds.ago, processed_count: 4),
-          create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: nil),
-
-          create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: 100.seconds.ago, processed_count: 5),
-          create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: nil),
-        ]
-      end
-
-      let(:expected_shards_with_no_failure) { ["2", "8", "7"] }
-      let(:expected_shards_with_failure) { ["9", "6", "4"] }
-      let(:expected_shards) { expected_shards_with_no_failure + expected_shards_with_failure }
-
-      let(:failure_delay_seconds) { 10 }
-      let(:failure_exponent_base) { 2 }
-
-      it "finds all shards that did not fail or failed later than the wait period in order of last_failed_at (null is first)" do
-        input_queue = []
-        settings[:threaded_worker_failure_delay] = failure_delay_seconds
-        settings[:threaded_worker_failure_exponent_base] = failure_exponent_base
-        producer = described_class.new input_queue, settings
-        producer.produce_work
-        expect(input_queue).to match_array(expected_shards)
-
-        expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
-        expect(input_queue[3..5]).to eq(expected_shards_with_failure)
-      end
+      expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
+      expect(input_queue[3..5]).to eq(expected_shards_with_failure)
     end
+  end
+
+  context "ignoring failed message shards with exponential backoff" do
+    let!(:messages) do
+      [
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 2, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 10.seconds.ago, processed_count: 1),
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: 25.seconds.ago, processed_count: 2),
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 5, needs_sending: false, last_failed_at: 40.seconds.ago),
+
+        create(:message, body: "test", shard_id: 6, needs_sending: true, last_failed_at: 45.seconds.ago, processed_count: 3),
+
+        create(:message, body: "test", shard_id: 7, needs_sending: false, last_failed_at: 10.seconds.ago),
+        create(:message, body: "test", shard_id: 7, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 8, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 9, needs_sending: true, last_failed_at: 85.seconds.ago, processed_count: 4),
+
+        create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: 20.seconds.ago, processed_count: 2),
+        create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: 40.seconds.ago, processed_count: 3),
+        create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: 80.seconds.ago, processed_count: 4),
+        create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: 100.seconds.ago, processed_count: 5),
+        create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: nil),
+      ]
+    end
+
+    let(:expected_shards_with_no_failure) { ["2", "8", "7"] }
+    let(:expected_shards_with_failure) { ["9", "6", "4"] }
+    let(:expected_shards) { expected_shards_with_no_failure + expected_shards_with_failure }
+
+    let(:failure_delay_seconds) { 10 }
+    let(:failure_exponent_base) { 2 }
+
+    it "finds all shards that did not fail or failed later than the wait period in order of last_failed_at (null is first)" do
+      input_queue = []
+      settings[:threaded_worker_failure_delay] = failure_delay_seconds
+      settings[:threaded_worker_failure_exponent_base] = failure_exponent_base
+      producer = described_class.new input_queue, settings
+      producer.produce_work
+      expect(input_queue).to match_array(expected_shards)
+
+      expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
+      expect(input_queue[3..5]).to eq(expected_shards_with_failure)
+    end
+  end
+
+  context "ignoring failed message shards with exponential backoff but max failure delay configured" do
+    let!(:messages) do
+      [
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 1, needs_sending: false, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 2, needs_sending: false, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 10.seconds.ago, processed_count: 1),
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: 25.seconds.ago, processed_count: 2),
+        create(:message, body: "test", shard_id: 4, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 5, needs_sending: false, last_failed_at: 40.seconds.ago),
+
+        create(:message, body: "test", shard_id: 6, needs_sending: true, last_failed_at: 45.seconds.ago, processed_count: 3),
+
+        create(:message, body: "test", shard_id: 7, needs_sending: false, last_failed_at: 10.seconds.ago),
+        create(:message, body: "test", shard_id: 7, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 8, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 9, needs_sending: true, last_failed_at: 85.seconds.ago, processed_count: 4),
+
+        create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: 20.seconds.ago, processed_count: 2),
+        create(:message, body: "test", shard_id: 10, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: 40.seconds.ago, processed_count: 3),
+        create(:message, body: "test", shard_id: 11, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: 80.seconds.ago, processed_count: 4),
+        create(:message, body: "test", shard_id: 12, needs_sending: true, last_failed_at: nil),
+
+        create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: 100.seconds.ago, processed_count: 5),
+        create(:message, body: "test", shard_id: 13, needs_sending: true, last_failed_at: nil),
+      ]
+    end
+
+    let(:expected_shards_with_no_failure) { ["2", "8", "7"] }
+    let(:expected_shards_with_failure) { ["13", "9", "12", "6", "4"] }
+    let(:expected_shards) { expected_shards_with_no_failure + expected_shards_with_failure }
+
+    let(:failure_delay_seconds) { 10 }
+    let(:failure_exponent_base) { 2 }
+
+    it "finds all shards that did not fail or failed later than the wait period in order of last_failed_at (null is first)" do
+      input_queue = []
+      settings[:threaded_worker_failure_delay] = failure_delay_seconds
+      settings[:threaded_worker_failure_exponent_base] = failure_exponent_base
+      settings[:threaded_worker_max_failure_delay] = 75
+      producer = described_class.new input_queue, settings
+      producer.produce_work
+      expect(input_queue).to match_array(expected_shards)
+
+      expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
+      expect(input_queue[3..-1]).to eq(expected_shards_with_failure)
+    end
+  end
 end

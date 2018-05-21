@@ -9,6 +9,7 @@ class ThreadedWorker
     :sleep_delay,
     :failure_delay,
     :failure_exponent_base,
+    :max_failure_delay,
   ]
 
   attr_accessor(*ALLOWED_OPTIONS)
@@ -46,6 +47,7 @@ class ThreadedWorker
     self.sleep_delay = options[:sleep_delay] || Settings.threaded_worker_sleep_delay
     self.failure_delay = options[:failure_delay] || Settings.threaded_worker_failure_delay
     self.failure_exponent_base = options[:failure_exponent_base] || Settings.threaded_worker_failure_exponent_base
+    self.max_failure_delay = options[:max_failure_delay] || Settings.threaded_worker_max_failure_delay
     self.input_queue = SizedQueue.new(thread_count)
     self.connection = options[:connection] || default_connection
     self.producer = load_producer(options[:producer_name], input_queue)
@@ -157,7 +159,11 @@ class ThreadedWorker
       return
     end
 
-    next_retry = RetryCalculator.new(failure_delay: failure_delay, failure_exponent_base: failure_exponent_base).next_retry(message)
+    next_retry = RetryCalculator.new(
+      failure_delay: failure_delay,
+      failure_exponent_base: failure_exponent_base,
+      max_failure_delay: max_failure_delay
+    ).next_retry(message)
     if message.last_failed_at && Time.now < next_retry
       info "Skipping processing of message #{message.id} since next retry time is #{next_retry}"
       return
