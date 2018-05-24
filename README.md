@@ -268,7 +268,10 @@ How does conductor know if a message it receives should be sent? - see `CONDUCTO
 `THREADED_WORKER_THREAD_COUNT` - Worker pool size. Defaults to: `10`  
 `THREADED_WORKER_SLEEP_DELAY` - Number of seconds to sleep the worker between polling for unsent messages. Defaults to: `1`  
 `THREADED_WORKER_NO_WORK_DELAY` - Number of seconds to sleep a worker if there are no unsend messages. Defaults to: `1`  
-`THREADED_WORKER_FAILURE_DELAY` - Number of seconds to sleep a shard if message delivery fails. Defaults to: `35`  
+`THREADED_WORKER_FAILURE_DELAY` - Initial Number of seconds to sleep a shard if message delivery fails. Defaults to: `35`  
+`THREADED_WORKER_FAILURE_EXPONENT_BASE` - The base value in the exponential backoff formula. Defaults to: 1 (Non-exponential backoff)
+`THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` - The max exponent to use in the exponential backoff formula for retrying messages. This value prevents the calculation from attempting to calculate a number that is too large. Defaults to: `300`
+`THREADED_WORKER_MAX_FAILURE_DELAY` - The max number of seconds that should pass before a message is retried. No default value. Not setting this means no limit.  
 `UNHEALTHY_SHARD_THRESHOLD` - Count of how many data shards must be blocked for the system to be considered unhealthy  
 `UNHEALTHY_MESSAGE_AGE_IN_SECONDS` - Age in seconds of oldest message until the system is considered unhealthy  
 `BLOCKED_SHARD_MESSAGE_FAILURE_THRESHOLD` - Number of times a message must be retried before it is considered to be blocking a shard  

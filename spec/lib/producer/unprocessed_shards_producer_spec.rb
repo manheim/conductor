@@ -8,7 +8,8 @@ RSpec.describe Producer::UnprocessedShardsProducer do
     {
       threaded_worker_failure_delay: failure_delay,
       threaded_worker_failure_exponent_base: 1,
-      threaded_worker_no_work_delay: delay
+      threaded_worker_no_work_delay: delay,
+      threaded_worker_max_exponent_value: 5
     }
   end
 
@@ -283,6 +284,26 @@ RSpec.describe Producer::UnprocessedShardsProducer do
 
       expect(input_queue[0..2]).to match_array(expected_shards_with_no_failure)
       expect(input_queue[3..-1]).to eq(expected_shards_with_failure)
+    end
+  end
+
+  context "with exponential backoff" do
+    let!(:messages) do
+      [
+        create(:message, body: "test", shard_id: 1, needs_sending: true, last_failed_at: 1000.year.ago, processed_count: 16000),
+        create(:message, body: "test", shard_id: 2, needs_sending: true, last_failed_at: 1000.year.ago, processed_count: 300),
+        create(:message, body: "test", shard_id: 3, needs_sending: true, last_failed_at: 1.hour.ago, processed_count: 300),
+      ]
+    end
+
+    it "finds shards that have large processed counts (no database error)" do
+      input_queue = []
+      settings[:threaded_worker_failure_delay] = 1
+      settings[:threaded_worker_failure_exponent_base] = 2
+      settings[:threaded_worker_max_exponent_value] = 300
+      producer = described_class.new input_queue, settings
+      producer.produce_work
+      expect(input_queue).to match_array(["1", "2"])
     end
   end
 end

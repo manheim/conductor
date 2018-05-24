@@ -17,6 +17,7 @@ threaded_worker_sleep_delay: <%= ENV['THREADED_WORKER_SLEEP_DELAY'] ? ENV['THREA
 threaded_worker_failure_delay: <%= ENV['THREADED_WORKER_FAILURE_DELAY'] ? ENV['THREADED_WORKER_FAILURE_DELAY'].to_i : 35  %>
 threaded_worker_max_failure_delay: <%= ENV['THREADED_WORKER_MAX_FAILURE_DELAY'] ? ENV['THREADED_WORKER_MAX_FAILURE_DELAY'].to_i : nil  %>
 threaded_worker_failure_exponent_base: <%= ENV['THREADED_WORKER_FAILURE_EXPONENT_BASE'] ? ENV['THREADED_WORKER_FAILURE_EXPONENT_BASE'].to_i : 1  %>
+threaded_worker_max_exponent_value: <%= ENV['THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE'] ? ENV['THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE'].to_i : 300  %>
 threaded_worker_no_work_delay: <%= ENV['THREADED_WORKER_NO_WORK_DELAY'] ? ENV['THREADED_WORKER_NO_WORK_DELAY'].to_i : 1  %>
 endpoint_hostname: <%= ENV['ENDPOINT_HOSTNAME'] || 'http://localhost:3001' %>
 endpoint_path: <%= ENV['ENDPOINT_PATH'] || "/scaffolding/messages" %>

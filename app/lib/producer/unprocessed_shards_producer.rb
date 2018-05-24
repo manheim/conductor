@@ -18,6 +18,7 @@ module Producer
       @failure_delay = settings[:threaded_worker_failure_delay]
       @max_failure_delay = settings[:threaded_worker_max_failure_delay] || MAX_INT_VALUE
       @failure_exponent_base = settings[:threaded_worker_failure_exponent_base]
+      @max_exponent_value = settings[:threaded_worker_max_exponent_value]
     end
 
     def produce_work
@@ -54,7 +55,7 @@ module Producer
            where needs_sending = true
            group by shard_id
          )
-         and (TIMESTAMPDIFF(SECOND, last_failed_at, now()) > LEAST(#{@max_failure_delay}, (#{@failure_delay} * POW(#{@failure_exponent_base}, processed_count - 1))) or last_failed_at is null)
+         and (TIMESTAMPDIFF(SECOND, last_failed_at, now()) > LEAST(#{@max_failure_delay}, (#{@failure_delay} * POW(#{@failure_exponent_base}, LEAST(#{@max_exponent_value}, processed_count) - 1))) or last_failed_at is null)
          order by last_failed_at
         "
       ).to_a.flatten

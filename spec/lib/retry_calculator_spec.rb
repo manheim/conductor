@@ -5,8 +5,16 @@ RSpec.describe RetryCalculator do
   let(:now) { Time.now }
   let(:last_failed_at) { 5.minutes.ago }
   let(:max_failure_delay) { nil }
+  let(:max_exponent_value) { 300 }
 
-  subject { RetryCalculator.new failure_delay: failure_delay, failure_exponent_base: failure_exponent_base, max_failure_delay: max_failure_delay }
+  subject do
+    RetryCalculator.new(
+      failure_delay: failure_delay,
+      failure_exponent_base: failure_exponent_base,
+      max_failure_delay: max_failure_delay,
+      max_exponent_value: max_exponent_value,
+    )
+  end
 
   context "no exponential backoff configured" do
     let(:failure_delay) { rand(1..99) }
@@ -82,6 +90,21 @@ RSpec.describe RetryCalculator do
       it "returns the next time to retry exponentally" do
         retry_at = subject.next_retry(message)
         expect(retry_at).to eq(last_failed_at + 80)
+      end
+    end
+
+    context "10000 failures" do
+      let(:failure_delay) { 10 }
+      let(:processed_count) { 10000 }
+      let(:failure_exponent_base) { 2 }
+
+      it "limits the exponential calculation" do
+        retry_at = subject.next_retry(message)
+        expect(retry_at).to eq(
+          last_failed_at + failure_delay * (
+            failure_exponent_base ** (max_exponent_value - 1)
+          )
+        )
       end
     end
 
