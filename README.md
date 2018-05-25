@@ -237,12 +237,58 @@ Possible HTTP Response codes:
 Configuration is done via Environmental Variables.
 
 **Highlighted Config Options**  
+  
 Where are messages sent? - See `ENDPOINT_HOSTNAME`, `ENDPOINT_PATH`, `ENDPOINT_QUERY`  
 Where do logs go? - Loggly, see `LOG_PATH`
 What is the shard identifier in the POST header? - see `CONDUCTOR_SHARD_TAG`  
 What is the login to the admin page? - see `BASIC_AUTH_ENABLED`, `BASIC_AUTH_USER`, `BASIC_AUTH_PASSWORD` and hardcoded  
 How does conductor know if a message it receives should be sent? - see `CONDUCTOR_ENABLE_TAG` and `WORKERS_ENABLED`
 
+**Failure Retry Behavior**  
+
+The conductor tracks the number of times a message was attempted to be sent using the column `processed_count`.
+
+The retry algorithm is:
+
+```
+seconds_until_next_send_attempt = failure_delay * exponent_base ^ (processed_count - 1)
+```
+
+So, if you started with an initial failure delay of 10 seconds and an exponent base of 2 then the retry delay would increase in a typical exponential pattern:
+
+1st retry: 10 seconds from last failure  
+2nd retry: 20 seconds from last failure  
+3rd retry: 40 seconds from last failure  
+4th retry: 80 seconds from last failure  
+5th retry: 160 seconds from last failure  
+
+There are 4 config options that influence the retry behavior:
+
+`THREADED_WORKER_FAILURE_DELAY` - Configures the failure_delay above  
+`THREADED_WORKER_FAILURE_EXPONENT_BASE` - Configures the exponent_base above  
+`THREADED_WORKER_MAX_FAILURE_DELAY` - Limits the seconds_until_next_send_attempt  
+`THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` - Limits the exponent value.  
+
+`THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` prevents abnormally large calculations. Mysql only allows double precision calculations to roughly 300 digits. This could be relevant if a conductor wasn't using exponential backoff and had messages that failed thousands of times. This limits the interstitial calculation so that errors don't happen.
+
+Let's show a more complex example. Let's say you don't want to double the retry delay and you want to limit the max delay; you can configure `THREADED_WORKER_FAILURE_DELAY` to be 10, `THREADED_WORKER_FAILURE_EXPONENT_BASE` to be 1.5, and `THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` to be 1800 (30 minutes).
+
+```
+seconds_until_next_send_attempt = 10 * 1.5 ^ (processed_count - 1)
+```
+
+1st retry: 10 seconds from last failure  
+2nd retry: 15 seconds from last failure  
+3rd retry: 22.5 seconds from last failure  
+4th retry: 33.75 seconds from last failure  
+5th retry: 50.625 seconds from last failure  
+...  
+11th retry: 864.975 seconds from last failure  
+12th retry: 1297.463 seconds from last failure  
+13th retry: 1800 seconds from last failure  
+14th retry: 1800 seconds from last failure  
+15th retry: 1800 seconds from last failure  
+  
 **All Available Environmental Variables**
 
 `APP_ENV` - The environment that app is running in. Ex: ci, uat, production  
@@ -269,8 +315,8 @@ How does conductor know if a message it receives should be sent? - see `CONDUCTO
 `THREADED_WORKER_SLEEP_DELAY` - Number of seconds to sleep the worker between polling for unsent messages. Defaults to: `1`  
 `THREADED_WORKER_NO_WORK_DELAY` - Number of seconds to sleep a worker if there are no unsend messages. Defaults to: `1`  
 `THREADED_WORKER_FAILURE_DELAY` - Initial Number of seconds to sleep a shard if message delivery fails. Defaults to: `35`  
-`THREADED_WORKER_FAILURE_EXPONENT_BASE` - The base value in the exponential backoff formula. Defaults to: 1 (Non-exponential backoff)
-`THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` - The max exponent to use in the exponential backoff formula for retrying messages. This value prevents the calculation from attempting to calculate a number that is too large. Defaults to: `300`
+`THREADED_WORKER_FAILURE_EXPONENT_BASE` - The base value in the exponential backoff formula. Defaults to: 1 (Non-exponential backoff)  
+`THREADED_WORKER_FAILURE_MAX_EXPONENT_VALUE` - The max exponent to use in the exponential backoff formula for retrying messages. This value prevents the calculation from attempting to calculate a number that is too large. Defaults to: `300`  
 `THREADED_WORKER_MAX_FAILURE_DELAY` - The max number of seconds that should pass before a message is retried. No default value. Not setting this means no limit.  
 `UNHEALTHY_SHARD_THRESHOLD` - Count of how many data shards must be blocked for the system to be considered unhealthy  
 `UNHEALTHY_MESSAGE_AGE_IN_SECONDS` - Age in seconds of oldest message until the system is considered unhealthy  
