@@ -10,6 +10,8 @@ class ThreadedWorker
     :failure_delay,
     :failure_exponent_base,
     :max_failure_delay,
+    :iterative_producer_batch_size,
+    :no_work_delay,
     :max_exponent_value,
   ]
 
@@ -50,6 +52,8 @@ class ThreadedWorker
     self.failure_exponent_base = options[:failure_exponent_base] || Settings.threaded_worker_failure_exponent_base
     self.max_failure_delay = options[:max_failure_delay] || Settings.threaded_worker_max_failure_delay
     self.max_exponent_value = options[:max_exponent_value] || Settings.threaded_worker_max_exponent_value
+    self.no_work_delay = options[:no_work_delay] || Settings.threaded_worker_no_work_delay
+    self.iterative_producer_batch_size = options[:iterative_producer_batch_size] || Settings.iterative_producer_batch_size
     self.input_queue = SizedQueue.new(thread_count)
     self.connection = options[:connection] || default_connection
     self.producer = load_producer(options[:producer_name], input_queue)
@@ -61,10 +65,12 @@ class ThreadedWorker
     producer_class ||= producer_name.constantize
     info "Loaded producer #{producer_class}"
     producer_class.new(input_queue, {
-      threaded_worker_failure_delay: Settings.threaded_worker_failure_delay,
-      threaded_worker_failure_exponent_base: Settings.threaded_worker_failure_exponent_base,
-      threaded_worker_no_work_delay: Settings.threaded_worker_no_work_delay,
-      threaded_worker_max_exponent_value: Settings.threaded_worker_max_exponent_value
+      iterative_producer_batch_size: iterative_producer_batch_size,
+      threaded_worker_failure_delay: failure_delay,
+      threaded_worker_failure_exponent_base: failure_exponent_base,
+      threaded_worker_no_work_delay: no_work_delay,
+      threaded_worker_max_exponent_value: max_exponent_value,
+      threaded_worker_max_failure_delay: max_failure_delay
     })
   end
 

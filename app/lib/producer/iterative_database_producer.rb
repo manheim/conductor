@@ -8,8 +8,9 @@ module Producer
   class IterativeDatabaseProducer
     include Logging
 
-    def initialize(input_queue, settings = {})
+    def initialize(input_queue, settings)
       @input_queue = input_queue
+      @iterative_producer_batch_size = settings[:iterative_producer_batch_size]
     end
 
     def produce_work
@@ -22,7 +23,7 @@ module Producer
                 Message.where(needs_sending: true)
               end
 
-      query.select(:id, :shard_id).find_in_batches(batch_size: Settings.iterative_producer_batch_size) do |messages|
+      query.select(:id, :shard_id).find_in_batches(batch_size: @iterative_producer_batch_size) do |messages|
         shards = messages.map(&:shard_id).uniq
         debug("Found #{shards.size} to produce")
         shards.each do |s|

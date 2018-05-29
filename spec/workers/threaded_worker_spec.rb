@@ -4,9 +4,21 @@ require 'webmock/rspec'
 
 RSpec.describe ThreadedWorker, type: :model do
   let(:failure_delay) { 3 }
+  let(:iterative_producer_batch_size) { rand(999) }
   let(:failure_exponent_base) { 1 }
   let(:max_failure_delay) { 75 }
-  subject { described_class.new({failure_delay: failure_delay, failure_exponent_base: failure_exponent_base, max_failure_delay: max_failure_delay }) }
+  let(:no_work_delay) { 0.1 }
+  let(:max_exponent_value) { 100 }
+
+  let(:worker_options) do
+    {
+      failure_delay: failure_delay,
+      failure_exponent_base: failure_exponent_base,
+      max_failure_delay: max_failure_delay
+    }
+  end
+
+  subject { described_class.new(worker_options) }
 
   let(:needs_sending_decision) { true }
 
@@ -18,7 +30,7 @@ RSpec.describe ThreadedWorker, type: :model do
 
   context "create_consumers" do
     let(:producer_name) { 'Producer::UnprocessedShardsProducer' }
-    subject { described_class.new({producer_name: producer_name}) }
+    let(:worker_options) { {producer_name: producer_name} }
 
     it "removes dead threads and starts new threads" do
       subject.create_consumers
@@ -37,22 +49,53 @@ RSpec.describe ThreadedWorker, type: :model do
 
   context "custom producers" do
     let(:producer_name) { 'Producer::UnprocessedShardsProducer' }
-    subject { described_class.new({producer_name: producer_name}) }
+    let(:worker_options) do
+      {producer_name: producer_name,
+       failure_delay: failure_delay,
+       no_work_delay: no_work_delay,
+       failure_exponent_base: failure_exponent_base,
+       max_failure_delay: max_failure_delay,
+       max_exponent_value: max_exponent_value}
+    end
+
     it "loads the given producer" do
       expect(subject.producer.class).to eq Producer::UnprocessedShardsProducer
+    end
+
+    it "provides the settings to the producer" do
+      expect(Producer::UnprocessedShardsProducer).to receive(:new).with anything, hash_including(
+        :threaded_worker_no_work_delay => no_work_delay,
+        :threaded_worker_failure_delay => failure_delay,
+        :threaded_worker_max_failure_delay => max_failure_delay,
+        :threaded_worker_failure_exponent_base => failure_exponent_base,
+        :threaded_worker_max_exponent_value => max_exponent_value
+      )
+      subject
     end
   end
 
   context "default producer" do
+    let(:worker_options) do
+      {
+       iterative_producer_batch_size: iterative_producer_batch_size
+      }
+    end
     it "uses iterative database producer by default" do
       expect(subject.producer.class).to eq Producer::IterativeDatabaseProducer
+    end
+
+    it "provides the settings to the producer" do
+      expect(Producer::IterativeDatabaseProducer).to receive(:new).with anything, hash_including(
+        :iterative_producer_batch_size => iterative_producer_batch_size
+      )
+      subject
     end
   end
 
   ['Producer::UnprocessedShardsProducer', 'Producer::IterativeDatabaseProducer'].each do |producer|
     describe "#process_work with #{producer}" do
       let(:producer_name) { producer }
-      subject { described_class.new({producer_name: producer_name}) }
+      let(:worker_options) { {producer_name: producer_name} }
 
       context "with one message, many shards" do
         let!(:messages) do
@@ -228,7 +271,7 @@ RSpec.describe ThreadedWorker, type: :model do
               .gsub("\n", "")
       end
 
-      subject { described_class.new({connection: connection, failure_delay: failure_delay}) }
+      let(:worker_options) { {connection: connection, failure_delay: failure_delay} }
 
       it "sends an authorization header" do
         message = create(:message, body: 1, shard_id: 1, headers: {foo: "bar"}.to_json, needs_sending: true)
@@ -323,13 +366,13 @@ RSpec.describe ThreadedWorker, type: :model do
         create(:message, body: 1, shard_id: 1, needs_sending: true)
       end
 
-      subject do
-        described_class.new({
+      let(:worker_options) do
+        {
           thread_count: 1,
           failure_delay: failure_delay,
           failure_exponent_base: failure_exponent_base,
           max_failure_delay: max_failure_delay
-        })
+        }
       end
 
       it "it skips work when failures occur until failure_delay has passed" do
