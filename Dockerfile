@@ -1,4 +1,4 @@
-FROM ruby:2.3.1
+FROM ruby:2.3.7
 EXPOSE 8080
 ENV PORT 8080
 ADD ./ /webapps
