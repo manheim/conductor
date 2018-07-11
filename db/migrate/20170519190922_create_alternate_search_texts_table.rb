@@ -2,8 +2,8 @@ class CreateAlternateSearchTextsTable < ActiveRecord::Migration
   def up
     execute <<-SQL
       CREATE TABLE `alternate_search_texts` (
-        `id` int(11) NOT NULL AUTO_INCREMENT,
-        `message_id` int(11) NOT NULL,
+        `id` bigint(20) NOT NULL AUTO_INCREMENT,
+        `message_id` bigint(20) NOT NULL,
         `text` longtext COLLATE utf8mb4_unicode_ci,
         `created_at` datetime(6) NOT NULL,
         `updated_at` datetime(6) NOT NULL,

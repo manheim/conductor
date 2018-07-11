@@ -14,7 +14,7 @@
 ActiveRecord::Schema.define(version: 20180315200001) do
 
   create_table "alternate_search_texts", force: :cascade do |t|
-    t.integer  "message_id", limit: 4,                        null: false
+    t.integer  "message_id", limit: 8,                        null: false
     t.text     "text",       limit: 4294967295
     t.datetime "created_at",                    precision: 6, null: false
     t.datetime "updated_at",                    precision: 6, null: false
@@ -53,7 +53,7 @@ ActiveRecord::Schema.define(version: 20180315200001) do
   end
 
   create_table "search_texts", force: :cascade do |t|
-    t.integer  "message_id", limit: 4,                        null: false
+    t.integer  "message_id", limit: 8,                        null: false
     t.text     "text",       limit: 4294967295
     t.datetime "created_at",                    precision: 6, null: false
     t.datetime "updated_at",                    precision: 6, null: false

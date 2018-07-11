@@ -2,7 +2,7 @@ class CreateMessages < ActiveRecord::Migration
   def up
     execute <<-SQL
       CREATE TABLE `messages` (
-        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `id` bigint(20) NOT NULL AUTO_INCREMENT,
         `body` longtext COLLATE utf8mb4_unicode_ci,
         `headers` longtext COLLATE utf8mb4_unicode_ci,
         `created_at` datetime(6) NOT NULL,
