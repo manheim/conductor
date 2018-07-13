@@ -1,6 +1,6 @@
 common: &common
-  host: <%= ENV['DATABASE_HOST'] || '' %>
-  username: <%= ENV['DATABASE_USERNAME'] || 'root' %>
+  host: <%= ENV['ALTERNATE_DATABASE_HOST'] || ENV['DATABASE_HOST'] || '' %>
+  username: <%= ENV['ALTERNATE_DATABASE_USERNAME'] || ENV['DATABASE_USERNAME'] || 'root' %>
   password: <%= ENV['DATABASE_PASSWORD'] || '' %>
   adapter: mysql2
   port: 3306
