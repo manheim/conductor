@@ -141,15 +141,18 @@ class ThreadedWorker
   end
 
   def process_shard(shard_id)
-    debug "About to get advisory lock on #{shard_id}"
+    lock_name = "#{LOCK_NAME_PREFIX}#{Digest::SHA1.hexdigest(shard_id.to_s)}"
+    debug "About to get advisory lock on #{shard_id} with lock name #{lock_name}"
 
-    if Message.advisory_lock_exists?("#{LOCK_NAME_PREFIX}#{shard_id}")
-      debug "Advisory lock detected on #{shard_id}. Skipping..."
+    if Message.advisory_lock_exists?(lock_name)
+      debug "Advisory lock detected on #{shard_id} and lock name #{lock_name}. Skipping..."
       return
     end
 
-    Message.with_advisory_lock("#{LOCK_NAME_PREFIX}#{shard_id}", 0) do
-      do_work_inside_lock(shard_id)
+    Message.with_advisory_lock(lock_name, 0) do
+      perform_action_with_newrelic_trace(name: "process_shard", category: :task, params: { shard_id: shard_id })  do
+        do_work_inside_lock(shard_id)
+      end
     end
   end
 

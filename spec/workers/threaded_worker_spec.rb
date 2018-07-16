@@ -585,5 +585,40 @@ RSpec.describe ThreadedWorker, type: :model do
     end
   end
 
+  context 'with long shard hashing enabled' do
+    let!(:messages) do
+      [create(:message, body: 1, shard_id: "a" * 190, needs_sending: true)]
+    end
+
+    it 'sets the need sending to false on success' do
+      stub_request(:post, /scaffolding\/messages/).
+          to_return(
+              :status => 200)
+      subject.process_without_looping
+      subject.wait_for_processing
+      sleep 1
+      message1 = Message.where(shard_id: "a" * 190).first
+
+      expect(message1.needs_sending?).to be false
+    end
+  end
+
+  context 'with a null shard id' do
+    let!(:messages) do
+      [create(:message, body: 1, shard_id: nil, needs_sending: true)]
+    end
+
+    it 'sets the need sending to false on success' do
+      stub_request(:post, /scaffolding\/messages/).
+          to_return(
+              :status => 200)
+      subject.process_without_looping
+      subject.wait_for_processing
+      sleep 1
+      message1 = messages.first.reload
+
+      expect(message1.needs_sending?).to be false
+    end
+  end
 
 end
