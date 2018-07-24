@@ -250,6 +250,7 @@ class ThreadedWorker
     if message.headers
       headers = JSON.parse(message.headers)
       headers.delete("Host")
+      headers.delete("Version")
       headers
     else
       {}
