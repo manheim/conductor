@@ -36,7 +36,7 @@ class MessageCreator
   def http_headers
     sent_headers = request.env.select {|k,v| k =~ /^HTTP_[A-Z_]+$/}
     extracted_headers = sent_headers.inject({}) do |acc, (k, v)|
-      converted_key = k.gsub(/^HTTP_/, "").gsub("_", "-").downcase.camelize
+      converted_key = k.gsub(/^HTTP_/, "").gsub("_", "-").downcase.capitalize
       acc[converted_key] = v
       acc
     end
@@ -45,15 +45,21 @@ class MessageCreator
       extracted_headers["Content-type"] = request.content_type
     end
 
-    x_forwarded_for = request.headers["X-Forwarded-For"].to_s.split(/, +/)
+    x_forwarded_for = request.headers["X-forwarded-for"].to_s.split(/, +/)
     x_forwarded_for << request.env["REMOTE_ADDR"]
 
     # Not clear we'd ever want to preserve the host
     extracted_headers.delete('Host')
 
-    extracted_headers['X-Forwarded-Host'] = request.host.to_s
-    extracted_headers['X-Forwarded-Port'] = request.port.to_s
-    extracted_headers['X-Forwarded-For'] = x_forwarded_for.join(", ")
+    # Version set by ELB loadbalancers
+    extracted_headers.delete('Version')
+
+    # Remove inbound connection info, https library specific headers
+    extracted_headers.delete("User-agent")
+
+    extracted_headers['X-forwarded-host'] = request.host.to_s
+    extracted_headers['X-forwarded-port'] = request.port.to_s
+    extracted_headers['X-forwarded-for'] = x_forwarded_for.join(", ")
 
     extracted_headers
   end

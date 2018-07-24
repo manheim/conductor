@@ -108,14 +108,14 @@ RSpec.describe MessagesController, type: :request do
 
       expect(message_headers['Content-type']).to eq "application/json"
 
-      expect(message_headers).to have_key('X-Forwarded-Host')
-      expect(message_headers).to have_key('X-Forwarded-Port')
-      expect(message_headers).to have_key('X-Forwarded-For')
+      expect(message_headers).to have_key('X-forwarded-host')
+      expect(message_headers).to have_key('X-forwarded-port')
+      expect(message_headers).to have_key('X-forwarded-for')
 
       message_headers.delete('Content-type')
-      message_headers.delete('X-Forwarded-For')
-      message_headers.delete('X-Forwarded-Host')
-      port = message_headers.delete('X-Forwarded-Port')
+      message_headers.delete('X-forwarded-for')
+      message_headers.delete('X-forwarded-host')
+      port = message_headers.delete('X-forwarded-port')
 
       expect(port.class).to be String
 
@@ -129,7 +129,7 @@ RSpec.describe MessagesController, type: :request do
 
     it "preserves a history of X-Forwarded-For" do
       headers = {
-        "X-Forwarded-For" => "123.123.123.123, 234.234.234.234",
+        "X-forwarded-for" => "123.123.123.123, 234.234.234.234",
       }
 
       post "/messages", body, headers
@@ -137,7 +137,7 @@ RSpec.describe MessagesController, type: :request do
       message = Message.last
 
       message_headers = JSON.parse(message.headers)
-      expect(message_headers['X-Forwarded-For']).to eq "123.123.123.123, 234.234.234.234, 127.0.0.1"
+      expect(message_headers['X-forwarded-for']).to eq "123.123.123.123, 234.234.234.234, 127.0.0.1"
     end
 
     it "doesn't save the Host header" do
@@ -151,6 +151,25 @@ RSpec.describe MessagesController, type: :request do
 
       message_headers = JSON.parse(message.headers)
       expect(message_headers).to_not have_key("Host")
+    end
+
+    it "doesn't save headers that are specific just the inbound connection and should not be passed along" do
+      headers = {
+        "Version" => "HTTP/1.1",
+        "Accept" => "*/*",
+        "Accept-charset" => "utf8",
+        "Accept-encoding" => "gzip,deflate",
+        "User-agent" => "Apache-HttpClient/4.5.2 (Java/1.8.0_111)"
+      }
+
+      post "/messages", body, headers
+      expect(response.code).to eq "200"
+      message = Message.last
+
+      message_headers = JSON.parse(message.headers)
+      expect(message_headers).to_not have_key("Host")
+      expect(message_headers).to_not have_key("Version")
+      expect(message_headers).to_not have_key("User-agent")
     end
   end
 end
