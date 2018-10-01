@@ -1,15 +1,16 @@
 class MessageCreator
-  attr_accessor :options, :settings, :params, :request
+  attr_accessor :options, :settings, :params, :request, :body
 
   def initialize(options)
     self.options = options
     self.settings = options[:settings]
     self.params = options[:params]
     self.request = options[:request]
+    self.body = options[:body]
   end
 
   def create
-    body = request.body.read
+    self.body ||= request.body.read
     headers = http_headers
 
     shard_id = ShardIdProvider.new(

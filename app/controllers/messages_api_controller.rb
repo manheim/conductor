@@ -38,6 +38,24 @@ class MessagesApiController < ApplicationController
     end
   end
 
+  def bulk_create
+    logger.info "bulk create call for message"
+    items = message_data['items']
+    render nothing: true, status: 400 and return unless message_data_valid(items)
+    Message.transaction do
+      items.each do |item|
+        MessageCreator.new({
+          request: request,
+          settings: Settings.to_hash,
+          body: item['body']
+        }).create
+      end
+    end
+    render nothing: true, status: 201
+  rescue
+    render nothing: true, status: 503
+  end
+
   def bulk_update
     ids, data = bulk_update_params
     if message_params_invalid
@@ -162,6 +180,10 @@ class MessagesApiController < ApplicationController
 
   def page_start
     params['start']
+  end
+
+  def message_data_valid(items)
+    (items && items.is_a?(Array)) && items.all? { |item| item.is_a?(Hash) && item['body'] }
   end
 
 end

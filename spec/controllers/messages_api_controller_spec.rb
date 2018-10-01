@@ -218,6 +218,90 @@ RSpec.describe MessagesApiController, type: :request do
     end
   end
 
+  describe "create message details in bulk (#bulk_create)" do
+    let(:messages_json) do
+      [
+        {
+          body: { someJson: "something1" }.to_json
+        },
+        {
+          body: { someJson: "something2" }.to_json
+        }
+      ]
+    end
+
+    let(:missing_body_message_json) do
+      [
+        {
+          body: { someJson: "something1" }.to_json
+        },
+        {
+          not_body: { someJson: "something2" }.to_json
+        }
+      ]
+    end
+
+    let(:missing_hash_message_json) do
+      [
+        {
+          body: { someJson: "something1" }.to_json
+        },
+        ""
+      ]
+    end
+
+    let(:message) { nil }
+
+    it "responds with a 201" do
+      post "/messages/bulk_create", { items: messages_json }.to_json
+      expect(response.code).to eq "201"
+    end
+
+    it "creates multiple messages" do
+      expect {
+        post "/messages/bulk_create", { items: messages_json }.to_json
+      }.to change { Message.count }.by 2
+      messages = Message.all
+      expect(messages.first.body).to eq messages_json.first[:body]
+      expect(messages.second.body).to eq messages_json.second[:body]
+    end
+
+    it "does not save any messages when a failure occurs" do
+      expect(Message).to receive(:create).and_call_original
+      expect(Message).to receive(:create).and_raise(StandardError.new("DB Fail"))
+      expect {
+        expect {
+          post "/messages/bulk_create", { items: messages_json }.to_json
+        }.to change { Message.count }.by 0
+      }.to_not raise_error
+      expect(response.code).to eq "503"
+    end
+
+    it "responds with a 400 when there is no items key" do
+      post "/messages/bulk_create", { }.to_json
+      expect(response.code).to eq "400"
+    end
+
+    it "responds with a 400 when the items is not an array" do
+      post "/messages/bulk_create", { items: "" }.to_json
+      expect(response.code).to eq "400"
+    end
+
+    it "responds with a 400 when any item is missing body key" do
+        expect {
+          post "/messages/bulk_create", { items: missing_body_message_json }.to_json
+        }.to change { Message.count }.by 0
+      expect(response.code).to eq "400"
+    end
+
+    it "responds with a 400 when any item not a hash" do
+        expect {
+          post "/messages/bulk_create", { items: missing_hash_message_json }.to_json
+        }.to change { Message.count }.by 0
+      expect(response.code).to eq "400"
+    end
+  end
+
   describe "update message details in bulk (#bulk_update)" do
 
     before do
@@ -534,6 +618,7 @@ end
 
 def randomize_message_values
   # set random values for message attributes
+  return unless message
   Message.columns.each do |col|
     next if col.name == 'id'
     case col.cast_type.type

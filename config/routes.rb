@@ -14,10 +14,11 @@ Rails.application.routes.draw do
 
   post "/messages"                        => "messages#create"
   post "/messages/bulk_update"            => "messages_api#bulk_update"
+  post "/messages/bulk_create"            => "messages_api#bulk_create"
   get  "/messages/search"                 => "messages_api#search"
   get  "/messages/:id"                    => "messages_api#show"
   post "/messages/:id"                    => "messages_api#update"
 
-  get "/runtime_settings"                    => "runtime_settings_api#show"
-  post "/runtime_settings"                    => "runtime_settings_api#update"
+  get "/runtime_settings"                 => "runtime_settings_api#show"
+  post "/runtime_settings"                => "runtime_settings_api#update"
 end
