@@ -39,7 +39,7 @@ class MessagesApiController < ApplicationController
   end
 
   def bulk_create
-    logger.info "bulk create call for message"
+    logger.info "bulk_create called"
     items = message_data['items']
     render nothing: true, status: 400 and return unless message_data_valid(items)
     Message.transaction do
@@ -52,7 +52,8 @@ class MessagesApiController < ApplicationController
       end
     end
     render nothing: true, status: 201
-  rescue
+  rescue => error
+    logger.error "bulk_create not successful. Error was: #{[error.message] + error.backtrace}"
     render nothing: true, status: 503
   end
 
