@@ -55,6 +55,9 @@ class MessageCreator
     # Version set by ELB loadbalancers
     extracted_headers.delete('Version')
 
+    # Conductor-Authorization used for an alternate auth header
+    extracted_headers.delete('Conductor-authorization')
+
     # Remove inbound connection info, https library specific headers
     extracted_headers.delete("User-agent")
 

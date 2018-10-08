@@ -216,6 +216,39 @@ RSpec.describe MessagesApiController, type: :request do
         end
       end
     end
+
+    context "custom conductor auth is on" do
+      let(:basic_auth_on) { true }
+
+      context "correct creds are provided" do
+        it "returns 200" do
+          custom_http_auth_as(Settings.basic_auth_user, Settings.basic_auth_password) do
+            auth_get "/messages/search"
+          end
+          expect(response.code).to eq '200'
+        end
+      end
+
+      context "no creds are provided" do
+        it "returns auth error" do
+          custom_http_auth_as('wrong', 'creds') do
+            auth_post "/messages/#{message.id}", { needs_sending: true }.to_json
+          end
+          expect(response.code).to eq '401'
+          expect(response.body).to eq "HTTP Basic: Access denied.\n"
+        end
+      end
+
+      context "incorrect creds are provided" do
+        it "returns auth error" do
+          custom_http_auth_as('wrong', 'creds') do
+            auth_get "/messages/search"
+          end
+          expect(response.code).to eq '401'
+          expect(response.body).to eq "HTTP Basic: Access denied.\n"
+        end
+      end
+    end
   end
 
   describe "create message details in bulk (#bulk_create)" do

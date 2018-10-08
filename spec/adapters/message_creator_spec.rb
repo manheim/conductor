@@ -28,6 +28,16 @@ RSpec.describe MessageCreator do
     }.to change{ Message.count }.by 1
   end
 
+  context "http headers" do
+    it "creates the message without the Conductor-Authorization header" do
+      request.env["HTTP_CONDUCTOR_AUTHORIZATION"] = "Basic abc123z"
+      allow(request).to receive(:body).and_return(StringIO.new("aaaaaaaaaa1234567890vin1234567890aaaaaaaaaaa"))
+      creator.create
+      message = Message.last
+      expect(JSON.parse(message.headers)).to_not have_key("Conductor-authorization")
+    end
+  end
+
   context "DISABLE_MESSAGE_SENDING" do
 
     let(:options) do
