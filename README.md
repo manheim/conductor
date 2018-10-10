@@ -130,7 +130,7 @@ There is a json api in the conductor that you can use to search for messages.
 Here is an example request that returns the first 25 message id:
 
 ```
-curl -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+curl -H "Conductor-Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
      "http://localhost:3000/messages/search"
 ```
 
@@ -155,7 +155,7 @@ There are a set of query parameters you can provide while searching:
 Example request:
 
 ```
-curl -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+curl -H "Conductor-Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
      "http://localhost:3000/messages/7"
 ```
 
@@ -189,7 +189,7 @@ Example request:
 
 ```
 curl -v -X POST -H "Content-Type: application/json" \
-     -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+     -H "Conductor-Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
      "http://localhost:3000/messages/7" \
      -d '{"needs_sending": false}'
 ```
@@ -202,6 +202,61 @@ Possible HTTP Response codes:
 * 400 if no data was provided to update
 
 *HTTP Response code of 4xx indicates the Message has not been updated*
+
+### Authorization
+
+There are admin credentials and readonly credentials:
+* When using a browser to access the admin page basic auth prompt is used.
+* When using an API endpoint either an 'Authorization' header or a 'Conductor-Authorization' header can be used.
+* The 'Conductor-Authorization' header allows for the forwarding of an 'Authorization' header to a downstream application.
+
+Example request for 'Authorization' header:
+
+```
+curl -v -X POST -H "Content-Type: application/json" \
+     -H "Authorization: Basic aWZzOnBhc3N3b3Jk" \
+     "http://localhost:3000/messages/bulk_update" \
+     -d '{"items": [7, 8], "data": {"needs_sending": false}}'
+```
+
+Example request for 'Conductor-Authorization' header:
+
+```
+curl -v -X POST -H "Content-Type: application/json" \
+     -H "Conductor-Authorization: Basic aWZzOnBhc3N3b3Jk" \
+     "http://localhost:3000/messages/bulk_update" \
+     -d '{"items": [7, 8], "data": {"needs_sending": false}}'
+```
+
+### Bulk Create
+
+*Requires Admin level credentials*
+
+This allows for multiple messages to be created.
+
+All creates are done as one transaction so there will never be a partial create if an error occurs.
+
+Example request:
+
+```
+curl -v -X POST -H "Content-Type: application/json" \
+     -H "Conductor-Authorization: Basic aWZzOnBhc3N3b3Jk" \
+     "http://localhost:3000/messages/bulk_create" \
+     -d '{"items": [{"body": "somestring of data"}]}'
+```
+
+*The value of a 'body' key must be a string representation of a properly encoded json or xml message*
+
+Possible HTTP Response codes:
+
+* 201 if the messages was successfully created
+* 401 if the basic auth credentials are incorrect or do not have permission
+* 400 if no data was provided to create
+* 400 if no 'items' key present
+* 400 if the value of 'items' is not an array
+* 400 if any item in 'items' does not have a 'body' key
+
+*HTTP Response code of 4xx indicates no Messages have been created*
 
 ### Bulk Update
 
@@ -216,7 +271,7 @@ Example request:
 
 ```
 curl -v -X POST -H "Content-Type: application/json" \
-     -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+     -H "Conductor-Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
      "http://localhost:3000/messages/bulk_update" \
      -d '{"items": [7, 8], "data": {"needs_sending": false}}'
 ```
@@ -350,7 +405,7 @@ An example POST request:
 
 ```
 curl -H 'Content-Type: application/json' \
-     -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+     -H "Conductor-Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
      -X POST \
      -d '{"settings":{ "workers_enabled": false }}' \
      http://localhost:3000/runtime_settings
