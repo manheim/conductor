@@ -9,18 +9,18 @@ RSpec.describe CleanupWorker, type: :request do
 
     let!(:old_created_messages) do
       (1..10).to_a.map do |i|
-        create(:message, created_at: 10.minutes.ago, succeeded_at: 9.minutes.ago)
+        create(:message, created_at: 10.minutes.ago, needs_sending: false)
       end
     end
 
     let!(:old_unsent_messages) do
       (1..10).to_a.map do |i|
-        create(:message, created_at: 10.minutes.ago)
+        create(:message, created_at: 10.minutes.ago, needs_sending: true)
       end
     end
     let!(:not_old_messages) do
       (1..20).to_a.map do |i|
-        create(:message, created_at: 5.minutes.ago, succeeded_at: 4.minutes.ago)
+        create(:message, created_at: 5.minutes.ago, needs_sending: false)
       end
     end
 

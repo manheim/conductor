@@ -26,7 +26,7 @@ class CleanupWorker
 
     loop do
       ids = Message.where(
-        "created_at < ? AND succeeded_at is not NULL", retention_period.seconds.ago
+        "created_at < ? AND needs_sending = 0", retention_period.seconds.ago
       ).limit(batch_size).pluck(:id).flatten
 
 
