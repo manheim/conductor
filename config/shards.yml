@@ -9,9 +9,9 @@ mysql: &mysql
   password: <%= ENV['DATABASE_PASSWORD'] || '' %>
   pool: <%= ENV['DATABASE_POOL_SIZE'] ? ENV['DATABASE_POOL_SIZE'].to_i : 25 %>
   connect_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
-  read_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  read_timeout: <%= ENV['DATABASE_TIMEOUT'] || 600 %>
   write_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
-  wait_timeout: <%= ENV['DATABASE_TIMEOUT'] || 50 %>
+  wait_timeout: <%= ENV['DATABASE_TIMEOUT'] || 600 %>
   # checkout_timeout if for active_record: https://github.com/rails/rails/issues/6441
   checkout_timeout: 5
 

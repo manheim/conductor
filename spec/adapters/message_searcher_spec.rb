@@ -20,6 +20,33 @@ RSpec.describe MessageSearcher do
     let!(:messages) { [] }
   end
 
+  context "when searching against replica" do
+    let(:search_term) { "word1" }
+    let(:options) do
+      {
+        max_full_text_search_results: 10,
+        search_term: search_term
+      }
+    end
+
+    let!(:messages) do
+      [
+        create(:message, body: "word1"),
+      ]
+    end
+
+    let(:matching_message_id_set) { [messages[2].id, messages[3].id] }
+
+    [:replica, :master].each do |shard|
+      it "tells octopus to use the #{shard}" do
+        expect(Octopus).to receive(:using).with(shard).exactly(3).times.and_call_original
+        Octopus.using(shard) do
+          subject.message_ids
+        end
+      end
+    end
+  end
+
   context "some messages that match" do
     let!(:messages_without_search_texts) do
       [
