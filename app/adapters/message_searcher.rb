@@ -12,9 +12,8 @@ class MessageSearcher
   end
 
   def search(boolean_search)
-    shard = ActiveRecord::Base.connection.current_shard
     Parallel.map([SearchText, AlternateSearchText], in_threads: 2) do |clazz|
-      Octopus.using(shard) do
+      Octopus.using(:replica) do
         search_from(clazz, boolean_search)
       end
     end.flatten.uniq

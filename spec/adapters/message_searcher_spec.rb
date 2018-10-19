@@ -38,9 +38,9 @@ RSpec.describe MessageSearcher do
     let(:matching_message_id_set) { [messages[2].id, messages[3].id] }
 
     [:replica, :master].each do |shard|
-      it "tells octopus to use the #{shard}" do
-        expect(Octopus).to receive(:using).with(shard).exactly(3).times.and_call_original
+      it "tells octopus to use the replica even if current shard is #{shard}" do
         Octopus.using(shard) do
+          expect(Octopus).to receive(:using).with(:replica).exactly(2).times.and_call_original
           subject.message_ids
         end
       end
