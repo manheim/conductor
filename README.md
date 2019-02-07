@@ -360,8 +360,8 @@ seconds_until_next_send_attempt = 10 * 1.5 ^ (processed_count - 1)
 `AUTOGENERATE_SHARD_ID_RANGE` - When autogenerating shards, specify this for the max number of shards  
 `CONDUCTOR_SHARD_TAG` - HTTP header which will define the shard id for a POST'd message  
 `EXTRACT_SHARD_ENABLED` - Autoextract the message's shard id from it's body. Defaults to: `false`  
-`EXTRACT_SHARD_CONTENT_TYPE` - Content type of message bodies. Ex: `json` or `xml` 
-`EXTRACT_SHARD_PATH` - Path to value within message's body which will be used as the message's shard id. Ex: `body.href` or an xpath expression for xml 
+`EXTRACT_SHARD_CONTENT_TYPE` - Content type of message bodies. Ex: `json` or `xml`  
+`EXTRACT_SHARD_PATH` - Path to value within message's body which will be used as the message's shard id. Ex: `body.href` or an xpath expression for xml  
 `CONDUCTOR_ENABLE_TAG` - HTTP header which message will have to have included for the message to be considered 'to-be-sent'  
 `ENDPOINT_PATH` - Path of URL for POSTing to message receiver  
 `ENDPOINT_QUERY` - Query params of URL for POSTing to message receiver  
@@ -382,7 +382,7 @@ seconds_until_next_send_attempt = 10 * 1.5 ^ (processed_count - 1)
 `PAGERDUTY_SERVICE_KEY` - API Key for PagerDuty  
 `DATADOG_API_KEY` - The API key you would like to use to push metrics to data dog. If not present metrics are not pushed.  
 `NEW_RELIC_APP_NAME` - Application Name for reporting to newrelic  
-`LOG_PATH` - A file path to write the logs to. Defaults to standard out if not set
+`LOG_PATH` - A file path to write the logs to. Defaults to standard out if not set  
 `MAX_NUMBER_OF_RETRIES` - Number of attempts to send message before giving up  
 `MOST_EXPECTED_MINUTES_BETWEEN_MESSAGES` - How long should conductor wait before alerting about starvation
 `INBOUND_MESSAGE_FILTER` - A JMESPath expression for whitelisting/allowing certain messages based on content. Only works for json messages.
